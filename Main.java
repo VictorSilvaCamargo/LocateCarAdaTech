@@ -1,13 +1,26 @@
 import java.util.Scanner;
-
-import Classes.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import Aluguel.*;
+import Atualizacao.*;
+import Busca.*;
+import Devolucao.*;
+import Pessoa.*;
+import Veiculo.*;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        VeiculoRepository veiculoRepository = new VeiculoRepository();
+        VeiculoRepository veiculoRepository = new VeiculoRepository(); // Crie uma instância do VeiculoRepository
+
         PessoaFisicaRepository pessoaFisicaRepository = new PessoaFisicaRepository();
         PessoaJuridicaRepository pessoaJuridicaRepository = new PessoaJuridicaRepository();
+        AluguelRepository aluguelRepository = new AluguelRepository();
+        DevolucaoRepository devolucaoRepository = new DevolucaoRepository();
+
+        AluguelManager aluguelManager = new AluguelManager(veiculoRepository, aluguelRepository);
+        DevolucaoManager devolucaoManager = new DevolucaoManager(veiculoRepository, aluguelRepository, devolucaoRepository);
 
         while (true) {
             System.out.println("Escolha uma opção:");
@@ -17,6 +30,9 @@ public class Main {
             System.out.println("4. Imprimir Lista de Veículos");
             System.out.println("5. Imprimir Lista de Pessoas Físicas");
             System.out.println("6. Imprimir Lista de Pessoas Jurídicas");
+            System.out.println("7. Atualizar Cadastro");
+            System.out.println("8. Alugar Veículo");
+            System.out.println("9. Devolver Veículo");
             System.out.println("0. Encerrar o programa");
 
             int opcao = scanner.nextInt();
@@ -54,7 +70,7 @@ public class Main {
                 }
                 case 3 -> {
                     System.out.println("Informe o nome da pessoa jurídica:");
-                    scanner.nextLine(); // Consumir a nova linha pendente
+                    scanner.nextLine();
                     String nomePessoaJuridica = scanner.nextLine();
                     System.out.println("Informe o sobrenome da pessoa jurídica:");
                     String sobrenomePessoaJuridica = scanner.nextLine();
@@ -70,19 +86,19 @@ public class Main {
 
                 }
                 case 4 -> {
-                    System.out.println("Informe o nome do veículo a ser buscado:");
-                    scanner.nextLine(); // Consumir a nova linha pendente
-                    String nomeVeiculoBusca = scanner.nextLine();
+                    System.out.println("Lista de Veículos Disponíveis:");
+                    List<Veiculo> veiculosDisponiveis = veiculoRepository.obterVeiculosDisponiveis();
 
-                    Veiculo veiculoEncontrado = veiculoRepository.encontrarVeiculoPorNome(nomeVeiculoBusca);
-
-                    if (veiculoEncontrado != null) {
-                        System.out.println("Veículo encontrado:");
-                        System.out.println("Nome: " + veiculoEncontrado.getNome());
-                        System.out.println("Placa: " + veiculoEncontrado.getPlaca());
-                        System.out.println("Tipo: " + veiculoEncontrado.getTipo());
+                    if (!veiculosDisponiveis.isEmpty()) {
+                        for (Veiculo veiculo : veiculosDisponiveis) {
+                            System.out.println("Nome: " + veiculo.getNome());
+                            System.out.println("Placa: " + veiculo.getPlaca());
+                            System.out.println("Tipo: " + veiculo.getTipo());
+                            System.out.println("Disponível: " + (veiculo.isDisponivel() ? "Sim" : "Não"));
+                            System.out.println();
+                        }
                     } else {
-                        System.out.println("Veículo não encontrado.");
+                        System.out.println("Nenhum veículo disponível no momento.");
                     }
                 }
 
@@ -96,7 +112,7 @@ public class Main {
                     System.out.println("3. Atualizar Veículo");
                     int opcaoAtualizacao = scanner.nextInt();
 
-                    scanner.nextLine(); // Consumir a nova linha pendente
+                    scanner.nextLine();
 
                     if (opcaoAtualizacao == 1) {
                         System.out.println("Informe o CPF da pessoa física a ser atualizada:");
@@ -107,7 +123,7 @@ public class Main {
                         System.out.println("Informe o novo sobrenome da pessoa física:");
                         String novoSobrenome = scanner.nextLine();
 
-                        // Buscar Pessoa Física por CPF
+
                         BuscadorPessoaFisicaImpl buscadorPessoaFisica = new BuscadorPessoaFisicaImpl(pessoaFisicaRepository);
                         AtualizadorPessoaFisicaImpl atualizadorPessoaFisica = new AtualizadorPessoaFisicaImpl(buscadorPessoaFisica);
                         boolean atualizado = atualizadorPessoaFisica.atualizarPessoaFisica(cpfExistente, novoNome, novoSobrenome);
@@ -126,7 +142,7 @@ public class Main {
                         System.out.println("Informe o novo sobrenome da pessoa jurídica:");
                         String novoSobrenome = scanner.nextLine();
 
-                        // Buscar Pessoa Jurídica por CNPJ
+
                         BuscadorPessoaJuridicaImpl buscadorPessoaJuridica = new BuscadorPessoaJuridicaImpl(pessoaJuridicaRepository);
                         AtualizadorPessoaJuridicaImpl atualizadorPessoaJuridica = new AtualizadorPessoaJuridicaImpl(buscadorPessoaJuridica);
                         boolean atualizado = atualizadorPessoaJuridica.atualizarPessoaJuridica(cnpjExistente, novoNome, novoSobrenome);
@@ -145,7 +161,7 @@ public class Main {
                         System.out.println("Informe o novo tipo do veículo:");
                         String novoTipo = scanner.nextLine();
 
-                        // Buscar Veículo por placa
+
                         BuscadorVeiculoImpl buscadorVeiculo = new BuscadorVeiculoImpl(veiculoRepository);
                         AtualizadorVeiculoImpl atualizadorVeiculo = new AtualizadorVeiculoImpl(buscadorVeiculo);
                         boolean atualizado = atualizadorVeiculo.atualizarVeiculo(placaExistente, novoNome, novoTipo);
@@ -158,9 +174,82 @@ public class Main {
                     } else {
                         System.out.println("Opção de atualização inválida.");
                     }
-                    break;
                 }
+                case 8 -> {
+                    System.out.println("Informe a placa do veículo a ser alugado:");
+                    scanner.nextLine();
+                    String placaAluguel = scanner.nextLine();
 
+                    System.out.println("Informe o CPF ou CNPJ do cliente:");
+                    String documentoCliente = scanner.nextLine();
+
+                    LocalDateTime dataHoraInicio = LocalDateTime.now();
+                    LocalDateTime dataHoraFim = dataHoraInicio.plusDays(1);
+
+                    Pessoa cliente = null;
+
+                    if (documentoCliente.length() == 11) {
+                        cliente = pessoaFisicaRepository.encontarPessoaPorCPF(documentoCliente);
+                    } else if (documentoCliente.length() == 14) {
+                        cliente = pessoaJuridicaRepository.encontrarPessoaPorCNPJ(documentoCliente);
+                    }
+
+                    if (cliente != null) {
+                        Aluguel aluguel = aluguelManager.alugarVeiculo(cliente, placaAluguel, dataHoraInicio, dataHoraFim);
+
+                        if (aluguel != null) {
+                            System.out.println("Veículo alugado com sucesso.");
+                            System.out.println("Detalhes do aluguel:");
+                            System.out.println("Cliente: " + cliente.getNome());
+                            System.out.println("Veículo: " + aluguel.getVeiculo().getNome());
+                            System.out.println("Data e Hora de Início: " + aluguel.getDataHoraInicio());
+                            System.out.println("Data e Hora de Fim: " + aluguel.getDataHoraFim());
+                        } else {
+                            System.out.println("Erro ao alugar veículo.");
+                        }
+                    } else {
+                        System.out.println("Cliente não encontrado.");
+                    }
+                }
+                case 9 -> {
+                    System.out.println("Informe a placa do veículo a ser devolvido:");
+                    scanner.nextLine();
+                    String placaDevolucao = scanner.nextLine();
+
+                    System.out.println("Informe a data e hora de devolução (yyyy-MM-dd HH:mm:ss):");
+                    String dataHoraDevolucaoStr = scanner.nextLine();
+
+                    LocalDateTime dataHoraDevolucao = LocalDateTime.parse(dataHoraDevolucaoStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+                    System.out.println("Informe o desconto (em porcentagem):");
+                    double desconto = scanner.nextDouble();
+
+                    Aluguel aluguel = aluguelRepository.encontrarAluguelPorPlaca(placaDevolucao);
+
+                    if (aluguel != null) {
+                        Devolucao devolucao = devolucaoManager.devolverVeiculo(aluguel, dataHoraDevolucao, desconto);
+
+                        if (devolucao != null) {
+                            System.out.println("Veículo devolvido com sucesso.");
+                            System.out.println("Detalhes da devolução:");
+                            System.out.println("Cliente: " + aluguel.getCliente().getNome());
+                            System.out.println("Veículo: " + aluguel.getVeiculo().getNome());
+                            System.out.println("Data e Hora de Devolução: " + devolucao.getDataHoraDevolucao());
+                            System.out.println("Desconto Aplicado: " + devolucao.getDesconto() + "%");
+                            System.out.println("Valor Total: R$ " + devolucao.getValorTotal());
+                        } else {
+                            System.out.println("Erro ao devolver veículo.");
+                        }
+                    } else {
+                        System.out.println("Aluguel não encontrado para a placa informada.");
+                    }
+                }
+                case 0 -> {
+                    System.out.println("Encerrando o programa.");
+                    scanner.close();
+                    System.exit(0);
+                }
+                default -> System.out.println("Opção inválida.");
             }
         }
     }
